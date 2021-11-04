@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace UdemyIdentity.Controllers
 {
-    [Authorize(Roles = "admin")]
+    //[Authorize(Roles = "admin")]
     public class AdminController : BaseController
     {
         //private UserManager<AppUser> userManager { get; }// Base Controllerde 
@@ -26,6 +26,14 @@ namespace UdemyIdentity.Controllers
         {
             return View();
         }
+
+        // Claims
+        // Cookie den dolan bilgiler
+        public IActionResult Claims()
+        {
+            return View(User.Claims.ToList());
+        }
+
 
 
         // Admin kullanıcıları çagırma
