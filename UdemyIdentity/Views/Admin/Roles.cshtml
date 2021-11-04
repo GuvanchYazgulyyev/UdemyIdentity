@@ -1,0 +1,45 @@
+﻿@model List<AppRole>
+@{
+    ViewData["Title"] = "Roles";
+    Layout = "~/Views/Admin/_AdminLayout.cshtml";
+}
+
+<h3>Roller</h3>
+<br />
+
+<table class="table table-bordered table-striped">
+    <tr>
+        @*<td>User Id</td>*@
+        <th>#</th>
+        <th>Rol Adı</th>
+        <th>Güncelle</th>
+        <th>Sil</th>
+
+    </tr>
+    @if (Model.Count() == 0)
+    {
+        <tr>
+            <td colspan="3">Daha Rol Eklenmemiştir!!!</td>
+        </tr>
+    }
+    else
+    {
+        @foreach (var x in Model)
+        {
+            <tr>
+                <td>@x.Id</td>
+                <td>@x.Name</td>
+                <td><a asp-action="RoleUpdate" asp-route-id="@x.Id" class="btn btn-outline-primary">Güncelle</a></td>
+                <td>
+                    <form asp-action="RoleDelete" asp-route-id="@x.Id" method="post">
+                        <button class="btn btn-danger" type="submit">Sil</button>
+                    </form>
+                </td>
+
+            </tr>
+        }
+    }
+</table>
+
+<br />
+<a asp-action="RoleCreat" class="btn btn-success">Rol Oluştur</a>

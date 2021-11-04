@@ -1,0 +1,128 @@
+﻿@model UdemyIdentity.ViewModels.UserViewModel
+@{
+    ViewData["Title"] = "SignUp";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Üye Ol</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--===============================================================================================-->
+    <link rel="icon" type="image/png" href="~/Loginn/images/icons/favicon.ico" />
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/vendor/bootstrap/css/bootstrap.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/fonts/font-awesome-4.7.0/css/font-awesome.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/fonts/Linearicons-Free-v1.0.0/icon-font.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/fonts/iconic/css/material-design-iconic-font.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/vendor/animate/animate.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/vendor/css-hamburgers/hamburgers.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/vendor/animsition/css/animsition.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/vendor/select2/select2.min.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/vendor/daterangepicker/daterangepicker.css">
+    <!--===============================================================================================-->
+    <link rel="stylesheet" type="text/css" href="~/Loginn/css/util.css">
+    <link rel="stylesheet" type="text/css" href="~/Loginn/css/main.css">
+    <!--===============================================================================================-->
+</head>
+<body style="background-color:#999999;">
+
+    <div class="limiter">
+        <div class="container-login100">
+            <div class="login100-more" style="background-image: url('/Loginn/images/bg-01.jpg');"></div>
+
+            <div class="wrap-login100 p-l-50 p-r-50 p-t-72 p-b-50">
+                <form class="login100-form validate-form" asp-action="SignUp" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <span class="login100-form-title p-b-59">
+                        Üye Ol
+                    </span>
+
+                    <div class="wrap-input100 validate-input" data-validate="Zorunlu Alan">
+                        @*<span class="label-input100">Kullanıcı Adı</span>*@
+                        <input class="input100" asp-for="UserName" placeholder="Kullanıcı Adı Giriniz...">
+                        <span asp-validation-for="UserName" class="focus-input100"></span>
+                    </div>
+
+                    <div class="wrap-input100">
+                        @*<span class="label-input100">Telefon No</span>*@
+                        <input asp-for="PhoneNumber" class="input100" placeholder="Telefon No..." >
+                        <span asp-validation-for="PhoneNumber" class="focus-input100"></span>
+                    </div>
+                    <div class="wrap-input100 validate-input" data-validate="E-Posta Adresi Gereklidir!">
+                        @*<span class="label-input100">E-Posta</span>*@
+                        <input asp-for="Email" class="input100" placeholder="E-Posta Adresiniz...">
+                        <span asp-validation-for="Email" class="focus-input100"></span>
+                    </div>
+                    <div class="wrap-input100 validate-input" data-validate="Şifreniz Gereklidir!">
+                        @*<span class="label-input100">Şifre</span>*@
+                        <input asp-for="Password" class="input100" placeholder="Şifreniz...">
+                        <span asp-validation-for="Password" class="focus-input100"></span>
+                    </div>
+
+                    
+
+                    <div class="flex-m w-full p-b-33">
+                        <div class="contact100-form-checkbox">
+                            <input class="input-checkbox100" id="ckb1" type="checkbox" name="remember-me">
+                            <label class="label-checkbox100" for="ckb1">
+                                <span class="txt1">
+                                    I agree to the
+                                    <a href="#" class="txt2 hov1">
+                                        Terms of User
+                                    </a>
+                                </span>
+                            </label>
+                        </div>
+
+
+                    </div>
+
+                    <div class="container-login100-form-btn">
+                        <div class="wrap-login100-form-btn">
+                            <div class="login100-form-bgbtn"></div>
+                            <button type="submit" class="login100-form-btn">
+                                Üye Oluştur
+                            </button>
+                        </div>
+
+                        <a asp-action="Login" class="dis-block txt3 hov1 p-r-30 p-t-10 p-b-10 p-l-30">
+                            Sign in
+                            <i class="fa fa-long-arrow-right m-l-5"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!--===============================================================================================-->
+
+    <script src="~/Loginn/vendor/jquery/jquery-3.2.1.min.js"></script>
+    <!--===============================================================================================-->
+    <script src="~/Loginn/vendor/animsition/js/animsition.min.js"></script>
+    <!--===============================================================================================-->
+    <script src="~/Loginn/vendor/bootstrap/js/popper.js"></script>
+    <script src="~/Loginn/vendor/bootstrap/js/bootstrap.min.js"></script>
+    <!--===============================================================================================-->
+    <script src="~/Loginn/vendor/select2/select2.min.js"></script>
+    <!--===============================================================================================-->
+    <script src="~/Loginn/vendor/daterangepicker/moment.min.js"></script>
+    <script src="~/Loginn/vendor/daterangepicker/daterangepicker.js"></script>
+    <!--===============================================================================================-->
+    <script src="~/Loginn/vendor/countdowntime/countdowntime.js"></script>
+    <!--===============================================================================================-->
+    <script src="~/Loginn/js/main.js"></script>
+
+</body>
+</html>
+
