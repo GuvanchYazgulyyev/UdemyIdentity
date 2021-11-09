@@ -244,5 +244,14 @@ namespace UdemyIdentity.Controllers
         {
             return View();
         }
+
+        // Claim bazlı yetkilendirme Şehire göre giriş yapsın
+        [Authorize(Policy = "AnkaraPolicy")]
+        public IActionResult AnkaraPage()
+        {
+            return View();
+        }
+
+
     }
 }

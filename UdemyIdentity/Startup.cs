@@ -30,6 +30,14 @@ namespace UdemyIdentity
                 opts.UseSqlServer(configuration["ConnectionStrings:DefaultConnectionString"]);
             });
 
+            // Claim Yetki verme
+            services.AddAuthorization(opts =>
+            {
+                opts.AddPolicy("AnkaraPolicy", policy =>
+                {
+                    policy.RequireClaim("city", "ankara");
+                });
+            });
          
 
             // Burada ise nasıl kayt edecegimiz belirtiriz
@@ -106,7 +114,10 @@ namespace UdemyIdentity
 
 
             services.AddMvc();
-            //services.AddScoped<IClaimsTransformation, ClaimProvider.ClaimProvider>();
+
+            // ClimeProvider Classının çalışması için gerekir her request işleminde işlem yapar
+
+            services.AddScoped<IClaimsTransformation, ClaimProvider.ClaimProvider>();
 
             //services.AddControllersWithViews(); +++++++++
         }
