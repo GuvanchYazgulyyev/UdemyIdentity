@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using UdemyIdentity.Enums;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Security.Claims;
 
 namespace UdemyIdentity.Controllers
 {
@@ -226,8 +227,28 @@ namespace UdemyIdentity.Controllers
         }
 
         // Role yetkisi olmayan kişiler için 
-        public IActionResult AccessDenied()
+        public IActionResult AccessDenied(string ReturnUrl)
         {
+
+            if (ReturnUrl.Contains("AgePage"))
+            {
+                ViewBag.message = "Yaşınız 15 yaş altı oldugundan dolayı bu sayfaya erişme hakkınız yoktur!";
+            }
+            else if (ReturnUrl.Contains("AnkaraPage"))
+            {
+                ViewBag.message = "Bu sayfaya sadece Şehiri Ankara olan kullancılar erişebilir!";
+            } 
+            else if (ReturnUrl.Contains("Exchange"))
+            {
+                ViewBag.message = "30 günlük deneme süreciniz sona ermiştir!";
+            }
+            else
+            {
+                ViewBag.message = "Bu sayfaya maalesef erişim izininiz yoktur. Erişim" +
+                    " izni almak için site yöneticisi ile görüşünüz!";
+            }
+
+
             return View();
         }
 
@@ -252,6 +273,48 @@ namespace UdemyIdentity.Controllers
             return View();
         }
 
+        // Claim bazlı yetkilendirme Yaşa göre giriş yapsın
+        [Authorize(Policy = "AgePolicy")]
+        public IActionResult AgePage()
+        {
+            return View();
+        }
 
+
+
+
+        
+        // Ücretli sayfa
+         public async Task<IActionResult> ExchangeRedirect()
+        {
+
+            // Böyle bir Claim Var mı
+            bool result = User.HasClaim(k => k.Type == "ExpireDateExchange");
+
+            // Böyle bir kullanıcı yoksa ekleme yapıyoruz
+            if (!result)
+            {
+                Claim ExpireDateExchange = new Claim("ExpireDateExchange", DateTime.Now.AddDays
+                    (30).Date.ToShortDateString(), ClaimValueTypes.String, "Internal");
+
+                // işlem bittikten sonra siteye giriş çıkış yapar
+                await userManager.AddClaimAsync(CurrentUser, ExpireDateExchange);
+                await signInManager.SignOutAsync();
+                await signInManager.SignInAsync(CurrentUser,true);
+            }
+
+            return RedirectToAction("Exchange");
+        }
+
+
+
+
+        // İzin verildikten sonra bu sayfaya gidiyor
+
+        [Authorize(Policy = "ExchangePolicy")]
+        public IActionResult Exchange()
+        {
+            return View();
+        }
     }
 }

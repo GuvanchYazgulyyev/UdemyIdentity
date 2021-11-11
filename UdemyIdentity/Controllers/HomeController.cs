@@ -259,7 +259,7 @@ namespace UdemyIdentity.Controllers
 
                 // deneme.com/Home/ResetPasswordConfirm?userId=jdkjasbhdtoken=kdlksamdl
 
-                Helper.PasswordReset.PasswordResetSendEmail(passworResetLink);
+                Helper.PasswordReset.PasswordResetSendEmail(passworResetLink,user.Email);
                 ViewBag.status = "success";
 
             }

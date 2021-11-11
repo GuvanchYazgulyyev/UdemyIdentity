@@ -31,6 +31,20 @@ namespace UdemyIdentity.ClaimProvider
                 // Kullanıcı varsa 
                 if (user != null)
                 {
+
+                    // 18 yaş altı sınırlama
+                    if (user.BirthDay != null)
+                    {
+                        var today = DateTime.Today;
+                        var age = today.Year - user.BirthDay?.Year;
+
+                        if (age > 18)
+                        {
+                            Claim AgeClaim = new Claim("violence", true.ToString(), ClaimValueTypes.String, "Internal");
+                            identity.AddClaim(AgeClaim);
+                        }
+                    }
+
                     if (user.City != null)
                     {
                         if (!principal.HasClaim(k => k.Type == "city"))

@@ -24,6 +24,8 @@ namespace UdemyIdentity
         // Appsetting.json dosyası ile ilişkili veri tabanını kaydeder
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddTransient<IAuthorizationHandler, ExpireDateExchangeHandler>();// Claim için gerekli (ExchangePolicy)
+
             services.AddDbContext<AppIdentityDbContext>(opts =>
             {
                 //opts.UseSqlServer(configuration["DefaultConnectionString"]);
@@ -37,6 +39,17 @@ namespace UdemyIdentity
                 {
                     policy.RequireClaim("city", "ankara");
                 });
+
+                opts.AddPolicy("AgePolicy", policy =>
+                {
+                    policy.RequireClaim("violence");
+                });
+
+                opts.AddPolicy("ExchangePolicy", policy =>
+                {
+                    policy.AddRequirements(new ExpireDateExchangeRequirement());
+                });
+
             });
          
 
