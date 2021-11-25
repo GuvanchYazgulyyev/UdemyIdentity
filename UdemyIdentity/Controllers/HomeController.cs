@@ -18,7 +18,7 @@ namespace UdemyIdentity.Controllers
 
         //public  UserManager<AppUser> userManager { get; }
         //public SignInManager<AppUser> signInManager { get; }
-        public HomeController(UserManager<AppUser>userManager, SignInManager<AppUser> signInManager):base(userManager,signInManager)
+        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager) : base(userManager, signInManager)
         {
             //this.userManager = userManager;
             //this.signInManager = signInManager;
@@ -136,6 +136,9 @@ namespace UdemyIdentity.Controllers
                         return View(userlogin);
                     }
 
+
+                    // Burası E posta onaynı gösterir
+
                     if (userManager.IsEmailConfirmedAsync(user).Result == false)
                     {
                         ModelState.AddModelError("", "Email adresiniz onaylanmamıştır. Lütfen  epostanızı kontrol ediniz.");
@@ -185,14 +188,38 @@ namespace UdemyIdentity.Controllers
         }
 
 
+        // E Posta Dogrulandıktan sonra yönlendirilecek sayfa
+
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        {
+            var user = await userManager.FindByIdAsync(userId);
+            IdentityResult result = await userManager.ConfirmEmailAsync(user, token);
+
+            if (result.Succeeded)
+            {
+                ViewBag.status = "E Posta adresiniz onaylanmıştır. Sisteme giriş yapabilirsiniz.";
+            }
+            else
+            {
+                ViewBag.status = "Bir hata meydana geldi, lütfen daha sonra tekrar deneyin.";
+            }
+            return View();
+        }
+
+
+
+
+
+
+
         // Kayıt Olmak
         public IActionResult SignUp()
         {
             return View();
         }
-        
+
         [HttpPost]
-        public async Task< IActionResult> SignUp(UserViewModel userViewModel)
+        public async Task<IActionResult> SignUp(UserViewModel userViewModel)
         {
 
             // verinin olup olmadıgını kontrol ediyoruz
@@ -208,6 +235,19 @@ namespace UdemyIdentity.Controllers
 
                 if (result.Succeeded)
                 {
+                    // E Posta dogrulamak için kullanılıyor 
+                    // Öncelikle toke oluşturuyoruz
+                    string confirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                    string link = Url.Action("ConfirmEmail", "Home", new
+                    {
+                        userId = user.Id,
+                        token = confirmationToken
+                    }, protocol: HttpContext.Request.Scheme
+                    );
+
+                    // şimdi ise EmailConfirmation Clasa Send emaili gönderiyoruz
+                    Helper.EmailConfirmation.SendEmail(link, user.Email);
                     return RedirectToAction("Login");
                 }
 
@@ -241,7 +281,7 @@ namespace UdemyIdentity.Controllers
         }
 
         [HttpPost]
-         public IActionResult ResetPassword(PasswordResetViewModel passwordResetViewModel)
+        public IActionResult ResetPassword(PasswordResetViewModel passwordResetViewModel)
         {
             // Böyle bir kullanıcı var mı? Test edelim
             AppUser user = userManager.FindByEmailAsync(passwordResetViewModel.Email).Result;
@@ -259,7 +299,7 @@ namespace UdemyIdentity.Controllers
 
                 // deneme.com/Home/ResetPasswordConfirm?userId=jdkjasbhdtoken=kdlksamdl
 
-                Helper.PasswordReset.PasswordResetSendEmail(passworResetLink,user.Email);
+                Helper.PasswordReset.PasswordResetSendEmail(passworResetLink, user.Email);
                 ViewBag.status = "success";
 
             }
@@ -289,7 +329,7 @@ namespace UdemyIdentity.Controllers
         // Yeni şifre isteme
         // Bind sadece modelin içindeki istedigimiz yeri alır
         [HttpPost]
-        public async Task< IActionResult> ResetPasswordConfirm([Bind("PasswordNew")] PasswordResetViewModel passwordResetViewModel)
+        public async Task<IActionResult> ResetPasswordConfirm([Bind("PasswordNew")] PasswordResetViewModel passwordResetViewModel)
         {
             // Tempdata sayfalar arasında veri taşımak için kullanılır
             string token = TempData["token"].ToString();
@@ -299,9 +339,9 @@ namespace UdemyIdentity.Controllers
             AppUser user = await userManager.FindByIdAsync(userId);
 
             // Kullanıcı boş degilse
-            if (user !=null)
+            if (user != null)
             {
-                IdentityResult result = await userManager.ResetPasswordAsync(user, token, 
+                IdentityResult result = await userManager.ResetPasswordAsync(user, token,
                     passwordResetViewModel.PasswordNew);
                 // Eğer başarılı ise
                 if (result.Succeeded)
@@ -322,7 +362,7 @@ namespace UdemyIdentity.Controllers
                     //    ModelState.AddModelError("", item.Description);
                     //}
                     AddModelError(result);
-                } 
+                }
             }
             else
             {
@@ -331,6 +371,117 @@ namespace UdemyIdentity.Controllers
 
             return View(passwordResetViewModel);
 
+        }
+
+
+
+        // Facebook ile giri yap (FacebookLogin)
+
+        public IActionResult FacebookLogin(string ReturnUrl)
+        {
+            string RedirectUrl = Url.Action("ExternalResponse", "Home", new { ReturnUrl = ReturnUrl });
+
+            var properties = signInManager.ConfigureExternalAuthenticationProperties("Facebook", RedirectUrl);
+
+            // içersine ne alırsa onu getirir
+            return new ChallengeResult("Facebook", properties);
+        }
+
+
+        // Facebook donus sayfasi
+
+        public async Task<IActionResult> ExternalResponse(string ReturnUrl = "/")
+        {
+            // Kullanıcı bilgilerini alıyoruz
+            
+            ExternalLoginInfo info = await signInManager.GetExternalLoginInfoAsync();
+
+            if (info == null)
+            {
+                // eger bos gelirse login ekranına git
+                return RedirectToAction("LogIn");
+            }
+
+            else
+            {
+                // Doluysa
+                Microsoft.AspNetCore.Identity.SignInResult result = await signInManager.ExternalLoginSignInAsync(info.LoginProvider,
+                    info.ProviderKey, true);
+
+                if (result.Succeeded)
+                {
+                    return Redirect(ReturnUrl);
+                }
+                // eger kullanıcı ilk kez Facebook butonuna basıyorsa
+                else
+                {
+                    AppUser user = new AppUser();
+
+                    user.Email = info.Principal.FindFirst(ClaimTypes.Email).Value;
+
+                    string ExternalUserId = info.Principal.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+                    if (info.Principal.HasClaim(x => x.Type == ClaimTypes.Name))
+                    {
+                        string userName = info.Principal.FindFirst(ClaimTypes.Name).Value;
+                 
+
+                        userName = userName.Replace(' ','_').ToLower() + ExternalUserId.Substring(0, 6).ToString();
+                      
+                        user.UserName = userName;
+                    }
+
+                    // Eger Kullanıcı adı yoksa direk mail girebilir
+                    else
+                    {
+                        user.UserName= info.Principal.FindFirst(ClaimTypes.Email).Value;
+                    }
+
+                    // Kaydetme işlemi
+
+                    IdentityResult createResult = await userManager.CreateAsync(user);
+
+                    if (createResult.Succeeded)
+                    {
+                        IdentityResult loginResult = await userManager.AddLoginAsync(user, info);
+
+                        if (loginResult.Succeeded)
+                        {
+                            //await signInManager.SignInAsync(user, true);
+                            await signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, true);
+                            return Redirect(ReturnUrl);
+                        }
+                        // Hatalar
+
+                        else
+                        {
+                            AddModelError(loginResult);
+                        }
+                    }
+
+                    // Hatalar
+
+                    else
+                    {
+                        AddModelError(createResult);
+                    }
+                }
+            }
+            // Hataları alabilmek için burada string bir şekilde alıyoruz
+            List<string> errors = ModelState.Values.SelectMany(k => k.Errors).Select(l => l.ErrorMessage).ToList();
+
+
+            return View("Error",errors);
+        }
+
+
+
+
+        // Hata sayfaları
+
+        public ActionResult Error()
+        {
+            return View();
         }
     }
 }

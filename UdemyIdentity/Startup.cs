@@ -49,19 +49,26 @@ namespace UdemyIdentity
                 {
                     policy.AddRequirements(new ExpireDateExchangeRequirement());
                 });
-
             });
-         
+
+            // FAceoob Google ile giriş yapma Servisi
+
+            services.AddAuthentication().AddFacebook(opts =>
+            {
+                opts.AppId = configuration["Authentication:Facebook:AppId"];
+                opts.AppSecret = configuration["Authentication:Facebook:AppSecret"];
+            });
+
+
+
 
             // Burada ise nasıl kayt edecegimiz belirtiriz
-            services.AddIdentity<AppUser, AppRole>(opts=> {
+            services.AddIdentity<AppUser, AppRole>(opts =>
+            {
 
                 // Kullanıcı Üzerine
                 opts.User.RequireUniqueEmail = true;
                 opts.User.AllowedUserNameCharacters = "abcçdefgğhıijklmnoçpqrsştuüvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._";
-
-
-
 
 
                 // Şifre Şartları
