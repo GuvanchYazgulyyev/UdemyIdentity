@@ -14,13 +14,14 @@ using UdemyIdentity.Enums;
 using Microsoft.AspNetCore.Http;
 using System.IO;
 using System.Security.Claims;
+using UdemyIdentity.TwoFService;
 
 namespace UdemyIdentity.Controllers
 {
     [Authorize]
     public class MemberController : BaseController
     {
-
+        private readonly TwoFactorService _twoFactorService;
 
         // Controller Seviyesinde UserManager Elde edeiyoruz
 
@@ -28,8 +29,9 @@ namespace UdemyIdentity.Controllers
         //public UserManager<AppUser> userManager { get; }
         //public SignInManager<AppUser> signInManager { get; }
 
-        public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager):base(userManager,signInManager)
+        public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager,TwoFactorService twoFactorService):base(userManager,signInManager)
         {
+            _twoFactorService = twoFactorService;
             //this.userManager = userManager;
             //this.signInManager = signInManager;
 
@@ -84,6 +86,21 @@ namespace UdemyIdentity.Controllers
                 // Kullancıyı buluyoruz
                 //AppUser user = await userManager.FindByNameAsync(User.Identity.Name);
                 AppUser user = CurrentUser;
+
+
+                // Tellefonu Kontrol ediyoruz
+                string phone = userManager.GetPhoneNumberAsync(user).Result;
+
+                // Kullanıcı dan gelen tel no lie Texbox Tel no Karşılaşdırıyoruz.(Yani Yukardan gelen)
+                // Telefon No Farklı ise Buradaki kod çalışacak Aynı ise bu kod işleme girmeyecek
+                if (phone != userViewModel.PhoneNumber)
+                {
+                    if (userManager.Users.Any(k => k.PhoneNumber == userViewModel.PhoneNumber))
+                    {
+                        ModelState.AddModelError("", "Bu Telefon Numarası Zaten Kayıtlıdır!");
+                        return View(userViewModel);
+                    }
+                }
 
 
 
@@ -315,6 +332,112 @@ namespace UdemyIdentity.Controllers
         public IActionResult Exchange()
         {
             return View();
+        }
+
+
+
+
+        // Ders 2
+
+        public async Task<IActionResult> TwoFactorWithAuthenticator()
+        {
+            // Öncelikle AspNetUserTokens tablosunda  Value var mı (unformattedKey).
+            // Eger var ise Bu kodla devam et
+            string unformattedKey = await userManager.GetAuthenticatorKeyAsync(CurrentUser);
+
+            // Eğer Yok ise
+            // Bu kodla devam et
+            if (string.IsNullOrEmpty(unformattedKey))
+            {
+                await userManager.ResetAuthenticatorKeyAsync(CurrentUser);
+                unformattedKey = await userManager.GetAuthenticatorKeyAsync(CurrentUser);
+            }
+
+            AuthenticatorViewModel authenticatorViewModel = new AuthenticatorViewModel();
+            authenticatorViewModel.SharedKey = unformattedKey;
+            authenticatorViewModel.AuthenticatorUri = _twoFactorService.GenerateQrCodeUri(CurrentUser.Email, unformattedKey);
+            return View (authenticatorViewModel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TwoFactorWithAuthenticator(AuthenticatorViewModel authenticatorViewModel)
+        {
+            // Kullanıcıya gelen kodları düzenler, boşlukları çıkarır
+            var verificationCode = authenticatorViewModel.VerificationCode.Replace(" ", string.Empty).Replace("-", string.Empty);
+
+            var is2FaTokenValid = await userManager.VerifyTwoFactorTokenAsync(CurrentUser, userManager.Options.Tokens.
+                AuthenticatorTokenProvider, verificationCode);
+
+            // Kod dogrulandıgında Veri tabanında TwoFactorEnabled durumunu True yapar
+            if (is2FaTokenValid)
+            {
+                CurrentUser.TwoFactorEnabled = true;
+                CurrentUser.TwoFactor = (sbyte)TwoFactor.MicrosoftGoogle;
+
+                // 8 Tane Kurtarma Kodu Oluşturuyoruz
+                var recoveryCodes = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(CurrentUser, 8);
+                TempData["recoveryCodes"] = recoveryCodes;
+                TempData["message"] = "Kimlik Doğrulama Tipiniz Googele/Microsoft Olarak Belirlenmiştir!";
+                return RedirectToAction("TwoFactorAut");
+            }
+            // Kullanıcının girdigi dogrulama kodu yalnış ise
+            else
+            {
+                ModelState.AddModelError("", "Girdiginiz Doğrulama Kodu Yalnıştır!");
+                return View(authenticatorViewModel);
+            }
+        
+        }
+
+
+
+
+
+
+        // Burası Two Factor Auth DropDown Seçme yeridir
+        public IActionResult TwoFactorAut()
+        {
+            return View(new AuthenticatorViewModel() { TwoFactorType=(TwoFactor)CurrentUser.TwoFactor});
+        }
+
+        [HttpPost]
+        public async Task< IActionResult> TwoFactorAut(AuthenticatorViewModel authenticatorViewModel)
+        {
+            switch (authenticatorViewModel.TwoFactorType)
+            {
+                case TwoFactor.None:
+                    CurrentUser.TwoFactorEnabled = false;
+                    CurrentUser.TwoFactor = (sbyte)TwoFactor.None;
+                    TempData["message"] = "Kimlik Doğrulama Tipiniz Hiçbir Olarak Belirlenmiştir!";
+                    break;
+                case TwoFactor.Phone:
+                    // Eger Tel No yok ise Uyarı ver
+                    if (string.IsNullOrEmpty(CurrentUser.PhoneNumber))
+                    {
+                        ViewBag.warning = "Telefon Numaranız Belirtilmemiş. Lütfen Kullanıcı Güncelleme Sayfasından " +
+                            "telefon numaranızı belirtiniz! ";
+                    }
+
+                    // 
+                    CurrentUser.TwoFactorEnabled = true;
+                    CurrentUser.TwoFactor = (sbyte)TwoFactor.Phone;
+                    TempData["message"] = "Kimlik Doğrulama Tipiniz Telefon Doğrulama Olarak Belirlenmiştir!";
+
+                    break;
+                case TwoFactor.Email:
+                    CurrentUser.TwoFactorEnabled = true;
+                    CurrentUser.TwoFactor = (sbyte)TwoFactor.Email;
+                    TempData["message"] = "Kimlik Doğrulama Tipiniz E Posta Olarak Belirlenmiştir!";
+
+                    break;
+                case TwoFactor.MicrosoftGoogle:
+                    return RedirectToAction("TwoFactorWithAuthenticator");
+                  
+                default:
+                    break;
+            }
+            await userManager.UpdateAsync(CurrentUser);
+            return View(authenticatorViewModel);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace UdemyIdentity.Helper
             smtpClient.Host = "smtp.gmail.com";
             smtpClient.EnableSsl = true;
 
-            smtpClient.Credentials = new System.Net.NetworkCredential("kivancturkmenn@gmail.com", "Guga100997");
+            smtpClient.Credentials = new System.Net.NetworkCredential("kivancturkmenn@gmail.com", "150305653G");
 
             smtpClient.Send(mail);
             //mail.From = new MailAddress("kivancturkmenn@gmail.com");

@@ -10,8 +10,8 @@ using UdemyIdentity.Models;
 namespace UdemyIdentity.Migrations
 {
     [DbContext(typeof(AppIdentityDbContext))]
-    [Migration("20211030162817_Meslek")]
-    partial class Meslek
+    [Migration("20220107170628_TwoFactor")]
+    partial class TwoFactor
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -212,6 +212,9 @@ namespace UdemyIdentity.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<short?>("TwoFactor")
+                        .HasColumnType("smallint");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -230,6 +233,22 @@ namespace UdemyIdentity.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers");
+                });
+
+            modelBuilder.Entity("UdemyIdentity.Models.Yetenek", b =>
+                {
+                    b.Property<string>("ID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("YetenekAd")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("YetenekSeviye")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Yeteneks");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

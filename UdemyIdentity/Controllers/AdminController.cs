@@ -201,8 +201,47 @@ namespace UdemyIdentity.Controllers
                     await userManager.RemoveFromRoleAsync(user, x.RoleName);
                 }
             }
-            
+
             return RedirectToAction("Users");
         }
+
+
+
+        // Kullanıcının Şifresini Değiştirme Kısmı
+
+        public async Task<IActionResult> ResetUserPassword(string id)
+        {
+            // Kullanıcını Buluyoruz
+            AppUser user = await userManager.FindByIdAsync(id);
+
+            // Modelimizi Çagıryoruz
+            PasswordResetByAdminViewModel passwordResetByAdminViewModel = new PasswordResetByAdminViewModel();
+            passwordResetByAdminViewModel.UserId = user.Id;
+            return View(passwordResetByAdminViewModel);
+        }
+
+        // Post Kısmı
+
+        [HttpPost]
+        public async Task<IActionResult> ResetUserPassword(PasswordResetByAdminViewModel passwordResetByAdminViewModel)
+        {
+            // Kullanıcıyı Buluyoruz
+            AppUser user = await userManager.FindByIdAsync(passwordResetByAdminViewModel.UserId);
+
+            // Token Alıyoruz
+            // Şifre için
+            string token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            await userManager.ResetPasswordAsync(user, token, passwordResetByAdminViewModel.NewPassword);
+
+            // Security Stamp Sistemini degiştirmemiz gerekiyor (Bu şattır)
+            await userManager.UpdateSecurityStampAsync(user);
+
+
+            return RedirectToAction("Users");
+
+        }
+
+
     }
 }
