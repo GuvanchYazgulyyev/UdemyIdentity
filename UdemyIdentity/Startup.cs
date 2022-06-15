@@ -9,6 +9,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UdemyIdentity.CustomValidation;
 using UdemyIdentity.Models;
+using Microsoft.Extensions.Hosting;
+using UdemyIdentity.TwoFService;
+using System;
 
 namespace UdemyIdentity
 {
@@ -22,25 +25,71 @@ namespace UdemyIdentity
         }
 
         // Appsetting.json dosyası ile ilişkili veri tabanını kaydeder
+        // Servisleri Ekleme Yeri
         public void ConfigureServices(IServiceCollection services)
         {
+
+            // E Posta Onaylama Kısmı
+            services.Configure<TwoFactorOptions>(configuration.GetSection("TwoFactorOptions"));
+
+
+            //Two Factor Service Kısmı
+            services.AddScoped<TwoFactorService>();
+
+            // E mail ile dogrulamak için 
+            services.AddScoped<EmailSender>();
+            // Sms Sender
+            services.AddScoped<SMSSender>();
+
+            services.AddTransient<IAuthorizationHandler, ExpireDateExchangeHandler>();// Claim için gerekli (ExchangePolicy)
+
             services.AddDbContext<AppIdentityDbContext>(opts =>
             {
                 //opts.UseSqlServer(configuration["DefaultConnectionString"]);
                 opts.UseSqlServer(configuration["ConnectionStrings:DefaultConnectionString"]);
             });
 
-         
+            // Claim Yetki verme
+            services.AddAuthorization(opts =>
+            {
+                opts.AddPolicy("AnkaraPolicy", policy =>
+                {
+                    policy.RequireClaim("city", "ankara");
+                });
+
+                opts.AddPolicy("AgePolicy", policy =>
+                {
+                    policy.RequireClaim("violence");
+                });
+
+                opts.AddPolicy("ExchangePolicy", policy =>
+                {
+                    policy.AddRequirements(new ExpireDateExchangeRequirement());
+                });
+            });
+
+            // FAceoob Google ile giriş yapma Servisi
+
+            services.AddAuthentication().AddFacebook(opts =>
+            {
+                opts.AppId = configuration["Authentication:Facebook:AppId"];
+                opts.AppSecret = configuration["Authentication:Facebook:AppSecret"];
+            }).AddMicrosoftAccount(opts =>
+            {
+                opts.ClientId = configuration["Authentication:Microsoft:ClientId"];
+                opts.ClientSecret = configuration["Authentication:Microsoft:ClientSecret"];
+            });
+
+
+
 
             // Burada ise nasıl kayt edecegimiz belirtiriz
-            services.AddIdentity<AppUser, AppRole>(opts=> {
+            services.AddIdentity<AppUser, AppRole>(opts =>
+            {
 
                 // Kullanıcı Üzerine
                 opts.User.RequireUniqueEmail = true;
                 opts.User.AllowedUserNameCharacters = "abcçdefgğhıijklmnoçpqrsştuüvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._";
-
-
-
 
 
                 // Şifre Şartları
@@ -106,21 +155,46 @@ namespace UdemyIdentity
 
 
             services.AddMvc();
-            //services.AddScoped<IClaimsTransformation, ClaimProvider.ClaimProvider>();
+
+            // ClimeProvider Classının çalışması için gerekir her request işleminde işlem yapar
+
+            services.AddScoped<IClaimsTransformation, ClaimProvider.ClaimProvider>();
+
+
+            // E Posta Onay Gönderme Kod Süresi (Servisi)
+            services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.Name = "MainSession";
+            });
+
 
             //services.AddControllersWithViews(); +++++++++
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        // Middle ware ekleme yeri
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseDeveloperExceptionPage();
+
+            // BorwserLink ekleme Kısmı
+
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseBrowserLink();
+            }
+
+
+            //app.UseDeveloperExceptionPage();
             app.UseStatusCodePages();// Sitedeki hataları söyler Ornk(404, 500 hataları)
             app.UseStaticFiles();
 
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
+            // E Posta Onay Gönderme Kod Süresi (Katman)
+            app.UseSession();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(

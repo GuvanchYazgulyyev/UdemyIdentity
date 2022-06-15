@@ -11,5 +11,7 @@ namespace UdemyIdentity.Models
         public DateTime? BirthDay { get; set; }
         public string Meslek { get; set; }
         public int Gender { get; set; }
+
+        public sbyte? TwoFactor { get; set; }
     }
 }

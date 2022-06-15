@@ -5,8 +5,10 @@ namespace UdemyIdentity.Models
 {
     public class AppIdentityDbContext : IdentityDbContext<AppUser, AppRole, string>
     {
+         public DbSet<Yetenek> Yeteneks { get; set; }
         public AppIdentityDbContext(DbContextOptions<AppIdentityDbContext> options) : base(options)
         {
+           
         }
     }
 }

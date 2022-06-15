@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace UdemyIdentity.Migrations
 {
-    public partial class Initial : Migration
+    public partial class TwoFactor : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -43,11 +43,26 @@ namespace UdemyIdentity.Migrations
                     City = table.Column<string>(nullable: true),
                     Picture = table.Column<string>(nullable: true),
                     BirthDay = table.Column<DateTime>(nullable: true),
-                    Gender = table.Column<int>(nullable: false)
+                    Meslek = table.Column<string>(nullable: true),
+                    Gender = table.Column<int>(nullable: false),
+                    TwoFactor = table.Column<short>(nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Yeteneks",
+                columns: table => new
+                {
+                    ID = table.Column<string>(nullable: false),
+                    YetenekAd = table.Column<string>(nullable: true),
+                    YetenekSeviye = table.Column<string>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Yeteneks", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
@@ -195,7 +210,7 @@ namespace UdemyIdentity.Migrations
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
         }
-        // YAPILAN İŞİ GERİ ALMAK İÇİN İŞE YARAR
+
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
@@ -212,6 +227,9 @@ namespace UdemyIdentity.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "Yeteneks");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

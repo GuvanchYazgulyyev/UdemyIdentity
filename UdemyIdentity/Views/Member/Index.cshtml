@@ -22,10 +22,27 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex flex-column align-items-center text-center">
-                            <img src="@Model.Picture" alt="Admin" class="rounded-circle" width="150">
+                            @if (!String.IsNullOrEmpty(Model.Picture))
+                            {
+                                <img src="@Model.Picture" class="rounded-circle" width="150">
+                            }
+                            else
+                            {
+                                <span>Resim Yüklenmemiş</span>
+                            }
                             <div class="mt-3">
-                                <h4>@Model.UserName</h4>
-                               
+                                <h4>
+                                    @if (!String.IsNullOrEmpty(Model.UserName))
+                                    {
+                                        @Model.UserName
+                                    }
+                                    else
+                                    {
+                                        <span>Belirtilmemiş</span>
+                                    }
+
+                                </h4>
+
                                 <p class="text-secondary mb-1">
                                     @if (!String.IsNullOrEmpty(Model.Meslek))
                                     {
@@ -33,7 +50,7 @@
                                     }
                                     else
                                     {
-                                        <span>Belirtilmemiş</span>
+                                        <span>Meslek Belirtilmemiş</span>
                                     }
                                 </p>
                                 <p class="text-muted font-size-sm">

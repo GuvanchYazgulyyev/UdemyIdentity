@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace UdemyIdentity.Controllers
 {
-    [Authorize(Roles = "admin")]
+    //[Authorize(Roles = "admin")]
     public class AdminController : BaseController
     {
         //private UserManager<AppUser> userManager { get; }// Base Controllerde 
@@ -26,6 +26,14 @@ namespace UdemyIdentity.Controllers
         {
             return View();
         }
+
+        // Claims
+        // Cookie den dolan bilgiler
+        public IActionResult Claims()
+        {
+            return View(User.Claims.ToList());
+        }
+
 
 
         // Admin kullanıcıları çagırma
@@ -193,8 +201,47 @@ namespace UdemyIdentity.Controllers
                     await userManager.RemoveFromRoleAsync(user, x.RoleName);
                 }
             }
-            
+
             return RedirectToAction("Users");
         }
+
+
+
+        // Kullanıcının Şifresini Değiştirme Kısmı
+
+        public async Task<IActionResult> ResetUserPassword(string id)
+        {
+            // Kullanıcını Buluyoruz
+            AppUser user = await userManager.FindByIdAsync(id);
+
+            // Modelimizi Çagıryoruz
+            PasswordResetByAdminViewModel passwordResetByAdminViewModel = new PasswordResetByAdminViewModel();
+            passwordResetByAdminViewModel.UserId = user.Id;
+            return View(passwordResetByAdminViewModel);
+        }
+
+        // Post Kısmı
+
+        [HttpPost]
+        public async Task<IActionResult> ResetUserPassword(PasswordResetByAdminViewModel passwordResetByAdminViewModel)
+        {
+            // Kullanıcıyı Buluyoruz
+            AppUser user = await userManager.FindByIdAsync(passwordResetByAdminViewModel.UserId);
+
+            // Token Alıyoruz
+            // Şifre için
+            string token = await userManager.GeneratePasswordResetTokenAsync(user);
+
+            await userManager.ResetPasswordAsync(user, token, passwordResetByAdminViewModel.NewPassword);
+
+            // Security Stamp Sistemini degiştirmemiz gerekiyor (Bu şattır)
+            await userManager.UpdateSecurityStampAsync(user);
+
+
+            return RedirectToAction("Users");
+
+        }
+
+
     }
 }

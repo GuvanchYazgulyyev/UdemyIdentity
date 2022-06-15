@@ -1,0 +1,58 @@
+﻿@model AuthenticatorViewModel
+@{
+    ViewData["Title"] = "TwoFactorAut";
+    Layout = "~/Views/Member/_MemberLayout.cshtml";
+}
+
+<h3>İki Adımlı Kimlik Doğrulama</h3>
+
+<div class="row">
+    <div class="col-md-12">
+        <form asp-action="TwoFactorAut" method="post">
+            <div class="form-group">
+                <label asp-for="TwoFactorType" class="control-label"></label>
+                <select class="form-control" asp-for="TwoFactorType" asp-items="Html.GetEnumSelectList<TwoFactor>()"></select>
+
+            </div>
+            <div class="form-group">
+                <input type="submit"  value="Güncelle" class="btn btn-outline-success" />
+            </div>
+        </form>
+    </div>
+    @if (ViewBag.warning!=null)
+    {
+        <div class="col-md-12">
+            <div class="alert alert-warning">
+                @ViewBag.warning
+            </div>
+        </div>
+    }
+
+     @if (TempData["message"]!=null)
+    {
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                @TempData["message"]
+            </div>
+        </div>
+    }
+
+      @if (TempData["recoveryCodes"] != null)
+      {
+        <div class="col-md-12">
+            <div class="alert alert-info">
+               Aşağıdaki kodları güvenli bir yerde tutunuz. Google/Microsoft uygulamasını kullanmadıgınız durumda 
+                bu kurtarma kodlarını kullanabilirsiniz!
+            </div>
+            <div class="alert alert-success">
+                @foreach (var item in TempData["recoveryCodes"] as string[])
+                {
+                <strong>@item</strong>
+                }
+            </div>
+        </div>
+    }
+
+
+
+</div>
